@@ -1,0 +1,467 @@
+```html
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>मेरा अलार्म क्लॉक</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        .clock-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .time-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+        }
+
+        .date-display {
+            font-size: 1.1rem;
+            color: #e2e8f0;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        input[type="time"] {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-family: 'Poppins', sans-serif;
+            outline: none;
+        }
+        
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        .btn-set {
+            background: linear-gradient(to right, #00b4db, #0083b0);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-set:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 180, 219, 0.4);
+        }
+
+        .alarm-list {
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+
+        .alarm-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .alarm-item.ringing {
+            animation: shake 0.5s infinite;
+            background: rgba(239, 68, 68, 0.3); /* Red tint */
+            border: 1px solid rgba(239, 68, 68, 0.5);
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: none;
+            color: #fca5a5;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        
+        .stop-btn {
+            background: #ef4444;
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+        }
+        .stop-btn.show {
+            display: inline-block;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 300px;
+            width: 90%;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .modal-msg {
+            color: #cbd5e1;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="clock-container">
+        <h1 class="text-xl font-semibold mb-2 text-blue-200"><i class="ph ph-alarm text-2xl align-middle mr-2"></i>स्मार्ट अलार्म</h1>
+        
+        <div id="timeDisplay" class="time-display">00:00:00</div>
+        <div id="dateDisplay" class="date-display">लोड हो रहा है...</div>
+
+        <div class="input-group">
+            <input type="time" id="alarmTime" required>
+            <button id="setAlarmBtn" class="btn-set">
+                <i class="ph ph-plus-circle text-xl"></i> सेट करें
+            </button>
+        </div>
+
+        <div class="alarm-list w-full" id="alarmListContainer">
+            <h3 class="text-sm font-semibold mb-2 text-gray-300 border-b border-gray-500 pb-1">आपके अलार्म</h3>
+            <ul id="alarmsList" class="space-y-2">
+                <!-- Alarms will be added here dynamically -->
+                <li id="noAlarmsMsg" class="text-sm text-gray-400 text-center py-2">कोई अलार्म सेट नहीं है</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Alerts -->
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title flex items-center justify-center gap-2">
+                <i class="ph ph-warning-circle text-yellow-400"></i> सूचना
+            </h2>
+            <p id="modalMessage" class="modal-msg">संदेश यहाँ आएगा</p>
+            <button id="closeModalBtn" class="modal-btn">ठीक है</button>
+        </div>
+    </div>
+
+    <!-- Audio Element for Alarm Sound -->
+    <!-- Using a base64 encoded simple beep sound to ensure it works without external assets -->
+    <audio id="alarmAudio" loop>
+         <!-- Base64 string for a simple clear beep sound -->
+        <source src="data:audio/wav;base64,UklGRm4PAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUsPAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA/P/y8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vL8/ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPz/8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vz8gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPz/8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vz8gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPz/8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vz8gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPz/8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vz8gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPz/8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vz8gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPz/8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vz8gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPz/8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vz8gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPz/8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vz8gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPz/8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vz8gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg" type="audio/wav">
+    </audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const timeDisplay = document.getElementById('timeDisplay');
+            const dateDisplay = document.getElementById('dateDisplay');
+            const alarmTimeInput = document.getElementById('alarmTime');
+            const setAlarmBtn = document.getElementById('setAlarmBtn');
+            const alarmsList = document.getElementById('alarmsList');
+            const noAlarmsMsg = document.getElementById('noAlarmsMsg');
+            const alarmAudio = document.getElementById('alarmAudio');
+            
+            // Modal elements
+            const customModal = document.getElementById('customModal');
+            const modalMessage = document.getElementById('modalMessage');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+
+            let alarms = []; // Array to store alarm objects
+            let alarmCheckInterval;
+
+            // --- Modal Functions ---
+            function showModal(msg) {
+                modalMessage.textContent = msg;
+                customModal.classList.add('active');
+            }
+
+            closeModalBtn.addEventListener('click', () => {
+                customModal.classList.remove('active');
+            });
+
+            // --- Clock Functionality ---
+            function updateClock() {
+                const now = new Date();
+                
+                // Get Hours, Minutes, Seconds
+                let hours = now.getHours();
+                let minutes = now.getMinutes();
+                let seconds = now.getSeconds();
+
+                // Format Time (HH:MM:SS) - 24 hour format for internal checking, 12 or 24 for display
+                const displayHours = hours.toString().padStart(2, '0');
+                const displayMinutes = minutes.toString().padStart(2, '0');
+                const displaySeconds = seconds.toString().padStart(2, '0');
+                
+                timeDisplay.textContent = `${displayHours}:${displayMinutes}:${displaySeconds}`;
+
+                // Format Date (Hindi Locale)
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                // Using hi-IN for Hindi display
+                dateDisplay.textContent = now.toLocaleDateString('hi-IN', options);
+
+                // Check Alarms
+                checkAlarms(hours, minutes, seconds);
+            }
+
+            // Start clock immediately and update every second
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // --- Alarm Functionality ---
+
+            setAlarmBtn.addEventListener('click', () => {
+                const alarmTimeValue = alarmTimeInput.value; // Format: "HH:MM" (24hr)
+
+                if (!alarmTimeValue) {
+                    showModal("कृपया अलार्म के लिए समय चुनें।");
+                    return;
+                }
+
+                // Check if alarm already exists
+                if (alarms.some(a => a.time === alarmTimeValue)) {
+                    showModal("यह अलार्म पहले से ही सेट है।");
+                    return;
+                }
+
+                addAlarm(alarmTimeValue);
+                alarmTimeInput.value = ""; // Clear input
+            });
+
+            function addAlarm(timeStr) {
+                // timeStr is "HH:MM"
+                const alarmObj = {
+                    id: Date.now(), // Unique ID
+                    time: timeStr,
+                    isActive: true,
+                    isRinging: false
+                };
+
+                alarms.push(alarmObj);
+                renderAlarms();
+                showModal(`${timeStr} के लिए अलार्म सेट किया गया।`);
+            }
+
+            function renderAlarms() {
+                // Clear current list except the 'no alarms' message
+                Array.from(alarmsList.children).forEach(child => {
+                    if (child.id !== 'noAlarmsMsg') {
+                        child.remove();
+                    }
+                });
+
+                if (alarms.length === 0) {
+                    noAlarmsMsg.style.display = 'block';
+                } else {
+                    noAlarmsMsg.style.display = 'none';
+                    
+                    // Sort alarms by time
+                    alarms.sort((a, b) => a.time.localeCompare(b.time));
+
+                    alarms.forEach(alarm => {
+                        const li = document.createElement('li');
+                        li.className = `alarm-item ${alarm.isRinging ? 'ringing' : ''}`;
+                        li.dataset.id = alarm.id;
+
+                        // Formatting time for display (converting 24h to 12h for UI friendliness if desired, but keeping 24h here for simplicity as input is 24h)
+                        
+                        const timeSpan = document.createElement('span');
+                        timeSpan.className = 'font-bold text-lg flex items-center gap-2';
+                        timeSpan.innerHTML = `<i class="ph ph-clock"></i> ${alarm.time}`;
+
+                        const controlsDiv = document.createElement('div');
+                        controlsDiv.className = 'flex items-center gap-2';
+
+                        // Stop Button (only shows when ringing)
+                        const stopBtn = document.createElement('button');
+                        stopBtn.className = `stop-btn ${alarm.isRinging ? 'show' : ''}`;
+                        stopBtn.innerHTML = 'बंद करें';
+                        stopBtn.onclick = () => stopAlarm(alarm.id);
+
+                        // Delete Button
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'delete-btn';
+                        deleteBtn.innerHTML = '<i class="ph ph-trash text-xl"></i>';
+                        deleteBtn.title = "हटाएं";
+                        deleteBtn.onclick = () => deleteAlarm(alarm.id);
+
+                        controlsDiv.appendChild(stopBtn);
+                        controlsDiv.appendChild(deleteBtn);
+
+                        li.appendChild(timeSpan);
+                        li.appendChild(controlsDiv);
+                        alarmsList.appendChild(li);
+                    });
+                }
+            }
+
+            function deleteAlarm(id) {
+                const alarmIndex = alarms.findIndex(a => a.id === id);
+                if (alarmIndex > -1) {
+                    // If the deleted alarm was ringing, stop the audio
+                    if (alarms[alarmIndex].isRinging) {
+                        stopAudio();
+                    }
+                    alarms.splice(alarmIndex, 1);
+                    renderAlarms();
+                }
+            }
+
+            function checkAlarms(currentHour, currentMinute, currentSecond) {
+                const currentTimeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+                
+                alarms.forEach(alarm => {
+                    // Check if time matches and it's not already ringing, and we are at the beginning of the minute
+                    if (alarm.time === currentTimeStr && alarm.isActive && !alarm.isRinging && currentSecond === 0) {
+                        ringAlarm(alarm.id);
+                    }
+                });
+            }
+
+            function ringAlarm(id) {
+                const alarm = alarms.find(a => a.id === id);
+                if (alarm) {
+                    alarm.isRinging = true;
+                    // Usually alarm triggers shouldn't be active immediately after ringing to prevent re-triggering in same minute
+                    alarm.isActive = false; 
+                    
+                    playAudio();
+                    renderAlarms(); // Re-render to show shaking effect and stop button
+                }
+            }
+
+            function stopAlarm(id) {
+                const alarm = alarms.find(a => a.id === id);
+                if (alarm) {
+                    alarm.isRinging = false;
+                    // Reset it so it can ring tomorrow at the same time
+                    // Or keep it inactive if you want it to be a one-time alarm. We'll make it daily here.
+                    setTimeout(() => { alarm.isActive = true; }, 61000); 
+                    
+                    stopAudio();
+                    renderAlarms();
+                }
+            }
+
+            function playAudio() {
+                // Due to browser autoplay policies, this might require prior user interaction.
+                // Since they clicked "Set Alarm", the document usually considers it interacted with.
+                alarmAudio.currentTime = 0; // Start from beginning
+                alarmAudio.play().catch(error => {
+                    console.log("Audio play failed:", error);
+                    // Fallback visual alert if audio fails
+                    showModal("अलार्म बज रहा है! (आवाज़ नहीं बज सकी)");
+                });
+            }
+
+            function stopAudio() {
+                alarmAudio.pause();
+                alarmAudio.currentTime = 0;
+            }
+        });
+    </script>
+</body>
+</html>
+
+```
